@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+
+# React Native
+.react-native/
+
+# Android
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+*.apk
+*.aab
+
+# iOS
+ios/Pods/
+ios/build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xcworkspace
+!default.xcworkspace
+*.xccheckout
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Lock files (choose one based on your package manager)
+package-lock.json  # if using yarn
+# yarn.lock        # if using npm
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+web-build/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
