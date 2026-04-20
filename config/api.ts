@@ -15,28 +15,46 @@ import { Platform } from 'react-native';
 // 3. Windows Firewall allows incoming connections on port 5151
 // ============================================================
 
-// Get your local IP by running 'ipconfig' in CMD (Windows)
-const YOUR_LOCAL_IP: string = '192.168.18.9'; // <-- CHANGE THIS TO YOUR IP
-const PORT: string = '5151';
+// Optional env vars (set in .env and load with Expo):
+// EXPO_PUBLIC_API_BASE_URL=http://192.168.x.x:5151
+// EXPO_PUBLIC_API_LOCAL_IP=192.168.x.x
+// EXPO_PUBLIC_API_PORT=5151
+const ENV = ((globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env) || {};
+const ENV_BASE_URL = ENV.EXPO_PUBLIC_API_BASE_URL;
+const ENV_LOCAL_IP = ENV.EXPO_PUBLIC_API_LOCAL_IP;
+const ENV_PORT = ENV.EXPO_PUBLIC_API_PORT;
+
+// Fallbacks for local development when env vars are not defined
+const DEFAULT_LOCAL_IP = '192.168.18.9';
+const DEFAULT_PORT = '5151';
+
+const LOCAL_IP = ENV_LOCAL_IP || DEFAULT_LOCAL_IP;
+const PORT = ENV_PORT || DEFAULT_PORT;
 
 // Automatically select the right URL based on platform
 const getBaseUrl = (): string => {
+  // Highest priority: explicit full base URL from environment
+  if (ENV_BASE_URL) {
+    return ENV_BASE_URL;
+  }
+
   if (__DEV__) {
     // Development mode
     if (Platform.OS === 'android') {
-      return `http://${YOUR_LOCAL_IP}:${PORT}`;
+      return `http://${LOCAL_IP}:${PORT}`;
     } else if (Platform.OS === 'ios') {
-      return `http://${YOUR_LOCAL_IP}:${PORT}`;
+      return `http://${LOCAL_IP}:${PORT}`;
     }
   }
   // Production URL (update when deploying)
-  return `http://${YOUR_LOCAL_IP}:${PORT}`;
+  return `http://${LOCAL_IP}:${PORT}`;
 };
 
 const API_BASE_URL: string = getBaseUrl();
 
 console.log('🌐 API Base URL configured:', API_BASE_URL);
 console.log('📱 Platform:', Platform.OS);
+console.log('🧭 API source:', ENV_BASE_URL ? 'EXPO_PUBLIC_API_BASE_URL' : 'IP/PORT fallback');
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -50,7 +68,8 @@ const api: AxiosInstance = axios.create({
 // Request interceptor to add JWT token and log requests
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig): Promise<InternalAxiosRequestConfig> => {
-    console.log('📤 REQUEST:', config.method?.toUpperCase(), config.baseURL + config.url);
+    const requestUrl = `${config.baseURL ?? ''}${config.url ?? ''}`;
+    console.log('📤 REQUEST:', config.method?.toUpperCase(), requestUrl);
     console.log('📤 DATA:', JSON.stringify(config.data));
     const token = await AsyncStorage.getItem('token');
     if (token) {
@@ -59,7 +78,7 @@ api.interceptors.request.use(
     return config;
   },
   (error: AxiosError): Promise<never> => {
-    console.log('❌ REQUEST ERROR:', error.message);
+    console.log(' REQUEST ERROR:', error.message);
     return Promise.reject(error);
   }
 );
@@ -67,8 +86,8 @@ api.interceptors.request.use(
 // Response interceptor to handle errors and log responses
 api.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => {
-    console.log('✅ RESPONSE:', response.status, response.config.url);
-    console.log('✅ DATA:', JSON.stringify(response.data));
+    console.log(' RESPONSE:', response.status, response.config.url);
+    console.log(' DATA:', JSON.stringify(response.data));
     return response;
   },
   async (error: AxiosError): Promise<never> => {
@@ -82,9 +101,10 @@ api.interceptors.response.use(
       console.log('🔴 Please check:');
       console.log('🔴 1. Is your backend server running?');
       console.log('🔴 2. Are phone and computer on the SAME WiFi?');
-      console.log('🔴 3. Is the IP address correct? Current:', YOUR_LOCAL_IP);
+      console.log('🔴 3. Is the IP address correct? Current:', LOCAL_IP);
+      console.log('🔴    Tip: set EXPO_PUBLIC_API_BASE_URL to avoid hardcoding IPs');
       console.log('🔴 4. Is Windows Firewall blocking port', PORT, '?');
-      console.log('🔴 5. Try: ping', YOUR_LOCAL_IP, 'from your phone');
+      console.log('🔴 5. Try: ping', LOCAL_IP, 'from your phone');
       console.log('🔴 ');
       console.log('🔴 To find your IP, run in CMD: ipconfig');
       console.log('🔴 Look for "IPv4 Address" under your WiFi adapter');
